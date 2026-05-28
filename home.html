@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="home-hero">
+    <div>
+        {% if login_success %}
+        <div class="msg success">{{ login_success }}</div>
+        {% endif %}
+        <div class="home-eyebrow">Welcome to Dr. Assistant</div>
+        <h1 class="home-title">Elevate Your Diagnosis with AI Confidence.</h1>
+        <p class="home-subtitle">Clinical support from advanced histopathology image analysis.</p>
+        <a href="{{ url_for('login') }}" class="home-cta">Start Now</a>
+    </div>
+    <div class="home-hero-media">
+        <img class="hero-main-img" src="{{ url_for('pic_file', filename='Doctor Pic2.png') }}" alt="Clinical AI support">
+        <img class="hero-overlay-img" src="{{ url_for('pic_file', filename='Doctor Pic.png') }}" alt="Medical sample view">
+    </div>
+</section>
+
+<section class="story-section">
+    <div class="home-eyebrow" style="color:#0d5f58;">About Dr. Assistant</div>
+    <h2 class="story-heading">
+        The precision of medical AI helps doctors make faster, more reliable pathology decisions.
+    </h2>
+    <div class="story-grid">
+        <img src="{{ url_for('pic_file', filename='flow1.png') }}" alt="Doctor reviewing sample image">
+        <div class="story-card">
+            <img src="{{ url_for('pic_file', filename='Homepage.png') }}" alt="Digital pathology workspace">
+            <p>
+                Upload an image, select colon or lung check type, and receive class prediction,
+                confidence, and Grad-CAM visualization in a clean report.
+            </p>
+        </div>
+    </div>
+</section>
+{% endblock %}

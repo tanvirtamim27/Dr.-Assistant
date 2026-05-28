@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - Dr.Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #eaf2f2;
+            color: #214240;
+            min-height: 100vh;
+        }
+        
+        /* Navbar Style - Matching Report Page */
+        .custom-navbar {
+            background: #0d5f58;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .custom-navbar h1 {
+            color: #fff;
+            margin: 0;
+            font-size: 24px;
+            font-family: "Playfair Display", Georgia, serif;
+            font-weight: 600;
+        }
+        .back-dashboard-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: white;
+            color: #0d5f58;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .back-dashboard-btn:hover {
+            background: #f0f0f0;
+            color: #0a4a44;
+        }
+
+        /* Container & Card Style */
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .history-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 30px;
+            box-shadow: 0 10px 24px rgba(18, 55, 52, 0.08);
+        }
+        .hero h2 {
+            margin: 0 0 8px;
+            font-family: "Playfair Display", Georgia, serif;
+            font-size: 34px;
+            color: #214240;
+        }
+        .hero p { margin: 0 0 24px; color: #55716e; line-height: 1.6; }
+
+        /* Table Styling */
+        .table-responsive {
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        .history-table {
+            width: 100%;
+            margin-bottom: 0;
+            border-collapse: collapse;
+        }
+        .history-table thead {
+            background-color: #0d5f58;
+            color: white;
+        }
+        .history-table th {
+            padding: 15px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .history-table td {
+            padding: 15px;
+            vertical-align: middle;
+            font-size: 15px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Status Badge */
+        .badge-result {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            background-color: #eef9ee;
+            color: #0d5f58;
+            border: 1px solid #cde8cd;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            padding: 6px 12px;
+            font-size: 13px;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            transition: 0.2s;
+            border: none;
+        }
+        .btn-view {
+            background: #0d5f58;
+            color: white;
+            margin-right: 5px;
+        }
+        .btn-view:hover {
+            background: #0a4a44;
+            color: #fff;
+        }
+        .btn-delete {
+            background: #dc2626;
+            color: white;
+        }
+        .btn-delete:hover {
+            background: #b91c1c;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="custom-navbar">
+        <h1>Dr.Assistant - History</h1>
+        <a href="/doctor" class="back-dashboard-btn">← Back to Dashboard</a>
+    </nav>
+
+    <div class="container">
+        <div class="history-card">
+            <div class="hero">
+                <h2>🩺 Medical History</h2>
+                <p>View and manage all previously generated patient diagnosis reports.</p>
+            </div>
+
+            <div class="table-responsive">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Patient Name</th>
+                            <th>Final Result</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history %}
+                        <tr>
+                            <td>{{ item.formatted_date }}</td>
+                            <td><strong>{{ item.patient_name }}</strong></td>
+                            <td><span class="badge-result">{{ item.final_result }}</span></td>
+                            <td>
+                                <a href="/view_report/{{ item.id }}" class="btn-action btn-view">
+                                    <i class="fa-regular fa-eye"></i> View
+                                </a>
+                                <form action="/delete_history/{{ item.id }}" method="POST" style="display:inline;">
+                                    <button type="submit" class="btn-action btn-delete" onclick="return confirm('Are you sure you want to delete this record?')">
+                                        <i class="fa-solid fa-trash-can"></i> Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" style="text-align:center; padding: 40px; color: #888;">
+                                <i class="fa-solid fa-folder-open" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                                No records found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

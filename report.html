@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report - Dr.Assistant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: "Inter", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #eaf2f2;
+            color: #214240;
+            min-height: 100vh;
+        }
+        .custom-navbar {
+            background: #0d5f58;
+            padding: 18px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .custom-navbar h1 {
+            color: #fff;
+            margin: 0;
+            font-size: 24px;
+            font-family: "Playfair Display", Georgia, serif;
+            font-weight: 600;
+        }
+        .back-dashboard-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: white;
+            color: #0d5f58;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .back-dashboard-btn:hover {
+            background: #f0f0f0;
+            color: #0a4a44;
+        }
+        .container {
+            max-width: 900px; /* একটু চওড়া করা হয়েছে যাতে ইমেজ ভালো দেখায় */
+            margin: 40px auto;
+            padding: 0 26px;
+        }
+        .report-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 30px;
+            box-shadow: 0 10px 24px rgba(18, 55, 52, 0.08);
+        }
+        .hero h2 {
+            margin: 0 0 8px;
+            font-family: "Playfair Display", Georgia, serif;
+            font-size: 34px;
+            color: #214240;
+        }
+        .hero p { margin: 0 0 24px; color: #55716e; line-height: 1.6; }
+        .result {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #eef9ee;
+            border: 1px solid #cde8cd;
+        }
+        .result p {
+            margin: 12px 0;
+            font-size: 15px;
+        }
+        .result strong {
+            color: #0d5f58;
+            display: inline-block;
+            width: 160px;
+        }
+        
+        /* ইমেজ সেকশন ফিক্সড করা হয়েছে */
+        .report-images {
+            margin-top: 25px;
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* সমান দুই ভাগে ভাগ */
+            gap: 20px;
+            align-items: start;
+        }
+        .uploaded-preview {
+            text-align: center;
+            width: 100%;
+        }
+        .uploaded-preview p {
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #0d5f58;
+            font-size: 16px;
+        }
+        .uploaded-preview img {
+            width: 100%;       /* কন্টেইনারের পুরো চওড়া দখল করবে */
+            height: auto;      /* অনুপাত ঠিক রাখবে */
+            display: block;    /* নিচের এক্সট্রা গ্যাপ সরাবে */
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            object-fit: contain; /* ইমেজ কেটে যাবে না */
+        }
+        
+        .predict-btn {
+            border: 0;
+            background: #0d5f58;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 25px;
+            width: 100%;
+        }
+        .msg {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        .msg.error {
+            background: #fdecec;
+            color: #8a1f1f;
+            border: 1px solid #f1b4b4;
+        }
+
+        /* মোবাইলের জন্য রেসপনসিভ */
+        @media (max-width: 600px) {
+            .report-images {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="custom-navbar">
+        <h1>Dr.Assistant - Report</h1>
+        <a href="/doctor" class="back-dashboard-btn">← Back to Dashboard</a>
+    </nav>
+
+    <div class="container">
+        <div class="report-card">
+            <div class="hero">
+                <h2>Diagnostic Report</h2>
+                <p>Detailed analysis output based on the provided medical imaging.</p>
+            </div>
+
+            {% if report_error %}
+            <div class="msg error">{{ report_error }}</div>
+            {% else %}
+            <div id="report-capture" class="result">
+                <p><strong>Report ID:</strong> {{ report_id }}</p>
+                <p><strong>Token Number:</strong> {{ token_number }}</p>
+                <p><strong>Doctor Name:</strong> {{ doctor_name }}</p>
+                <p><strong>Doctor Email:</strong> {{ user_email }}</p>
+                <p><strong>Patient Name:</strong> {{ patient_name }}</p>
+                <p><strong>Cancer Type:</strong> {{ selected_cancer_type|title }}</p>
+                <p><strong>Prediction:</strong> {{ pred_class }}</p>
+                <p><strong>Confidence:</strong> {{ confidence }}</p>
+                <p><strong>Final Status:</strong> {{ final_result }}</p>
+
+                <div class="report-images">
+                    {% if filename %}
+                    <div class="uploaded-preview">
+                        <p>Uploaded Image</p>
+                        <img src="{{ url_for('uploaded_file', filename=filename) }}" alt="Uploaded image">
+                    </div>
+                    {% endif %}
+                    
+                    {% if gradcam_filename %}
+                    <div class="uploaded-preview">
+                        <p>Grad-CAM Analysis</p>
+                        <img src="{{ url_for('uploaded_file', filename=gradcam_filename) }}" alt="Grad-CAM image">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <button id="download-report-image" class="predict-btn">
+                <i class="fa fa-download"></i> Download Report as Image
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        const downloadBtn = document.getElementById("download-report-image");
+        const reportCapture = document.getElementById("report-capture");
+
+        if (downloadBtn && reportCapture) {
+            downloadBtn.addEventListener("click", async () => {
+                // ইমেজগুলো লোড হওয়ার জন্য সামান্য অপেক্ষা
+                const canvas = await html2canvas(reportCapture, { 
+                    scale: 2, 
+                    backgroundColor: "#ffffff",
+                    useCORS: true // সার্ভার থেকে ইমেজ লোড করার জন্য জরুরি
+                });
+                const imageData = canvas.toDataURL("image/png");
+                const link = document.createElement("a");
+                link.href = imageData;
+                link.download = "Patient_Report_{{ patient_name }}.png";
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

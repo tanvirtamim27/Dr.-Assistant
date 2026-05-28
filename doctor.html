@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="premium-shell">
+    <div class="premium-left">
+        <div class="hero" style="text-align:left;">
+            <h2>Doctor Page</h2>
+            <p>Check Colon Cancer or Lung Cancer and get the final model output.</p>
+            
+            
+        </div>
+
+        <form method="POST" action="{{ url_for('predict') }}" enctype="multipart/form-data" class="upload-section">
+            <div class="field">
+                <label for="doctor-name">Doctor Name</label>
+                <input id="doctor-name" type="text" name="doctor_name" value="{{ doctor_name or user_email }}" required>
+            </div>
+            <div class="field">
+                <label for="patient-name">Patient Name</label>
+                <input id="patient-name" type="text" name="patient_name" placeholder="Enter patient full name" required>
+            </div>
+            <div class="field">
+                <label for="cancer-type">Check Type</label>
+                <select id="cancer-type" name="cancer_type" required>
+                    <option value="">Select cancer type</option>
+                    <option value="colon" {% if selected_cancer_type == 'colon' %}selected{% endif %}>Colon Cancer</option>
+                    <option value="lung" {% if selected_cancer_type == 'lung' %}selected{% endif %}>Lung Cancer</option>
+                </select>
+            </div>
+            <label for="file-upload" class="custom-file-upload">Choose Image</label>
+            <input id="file-upload" type="file" name="file" accept="image/*" required>
+            <span id="file-name">No file selected</span>
+            <button type="submit" class="predict-btn">Check Final Output</button>
+        </form>
+
+        {% if predict_error %}<div class="msg error">{{ predict_error }}</div>{% endif %}
+        {% if last_token_number %}<div class="msg success">Last generated patient token: {{ last_token_number }}</div>{% endif %}
+        <div class="msg success">After submit, your final result will open in the Report page.</div>
+    </div>
+
+    <div class="premium-right">
+        <img src="{{ url_for('pic_file', filename='Doctor Pic2.png') }}" alt="Doctor analysis image">
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const fileInput = document.getElementById("file-upload");
+    const fileName = document.getElementById("file-name");
+    if (fileInput && fileName) {
+        fileInput.addEventListener("change", function () {
+            fileName.textContent = this.files.length ? this.files[0].name : "No file selected";
+        });
+    }
+</script>
+{% endblock %}
