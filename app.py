@@ -1,4 +1,3 @@
-
 import os
 os.environ["TF_USE_LEGACY_KERAS"] = "1"
 import uuid
@@ -50,7 +49,6 @@ FIREBASE_CONFIG = {
 }
 
 # Simple in-memory user store for demo purposes.
-# In production, replace with a real database and password hashing.
 users = {
     "demo@example.com": {
         "name": "Demo Doctor",
@@ -66,16 +64,16 @@ def initialize_firebase():
     if firebase_admin is None:
         return
 
-    # .env থেকে ফাইলের নাম নেওয়া (যেমন: firebase-key.json)
-    cred_name = os.environ.get("FIREBASE_CREDENTIALS", "firebase-key.json").strip()
+    # এখানে সরাসরি আপনার ফাইলের নাম 'firebase-key.json' নির্দিষ্ট করে দেওয়া হয়েছে
+    cred_name = "firebase-key.json"
     
-    # বর্তমান app.py ফাইলের লোকেশন অনুযায়ী সঠিক ও পূর্ণাঙ্গ পাথ তৈরি করা
-
+    # বর্তমান app.py ফাইলের লোকেশন অনুযায়ী সঠিক ও পূর্ণাঙ্গ পাথ তৈরি করা
     cred_path = os.path.join(base_dir, cred_name)
 
     # চেক করা হচ্ছে ফাইলটি ওই পাথে আছে কি না
-    if not cred_name or not os.path.exists(cred_path):
+    if not os.path.exists(cred_path):
         print(f"❌ Firebase key not found at: {cred_path}")
+        print("💡 অনুগ্রহ করে নিশ্চিত করুন যে 'firebase-key.json' ফাইলটি আপনার app.py এর পাশেই আছে।")
         return
 
     if not firebase_admin._apps:
@@ -91,7 +89,6 @@ def initialize_firebase():
 
 # ফাংশনটি কল করা
 initialize_firebase()
-
 
 
 # Get the absolute path to the model file relative to this app.py file
@@ -211,26 +208,19 @@ def generate_gradcam_overlay(image_path, class_index):
     pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
     conv_outputs = conv_outputs[0]
     
-    # Calculate the heatmap
     heatmap = tf.reduce_sum(conv_outputs * pooled_grads, axis=-1)
-    
-    # Normalize the heatmap between 0 and 1
     heatmap = tf.maximum(heatmap, 0) / (tf.math.reduce_max(heatmap) + 1e-12)
     heatmap = heatmap.numpy()
 
-    # Convert heatmap to 0-255 format
     heatmap_uint8 = np.uint8(255 * heatmap)
 
-    # Use Matplotlib's 'jet' colormap (Blue=Low, Red=High)
     jet = cm.get_cmap("jet")
-    jet_colors = jet(np.arange(256))[:, :3] # Extract RGB values
-    jet_heatmap = jet_colors[heatmap_uint8] # Apply colors to heatmap matrix
+    jet_colors = jet(np.arange(256))[:, :3]
+    jet_heatmap = jet_colors[heatmap_uint8]
 
-    # Resize the colorized heatmap to match original image dimensions
     jet_heatmap_img = Image.fromarray(np.uint8(jet_heatmap * 255)).resize((224, 224), Image.BILINEAR)
     jet_heatmap_array = np.array(jet_heatmap_img).astype("float32") / 255.0
 
-    # Superimpose the heatmap onto the original image (60% heatmap, 40% original)
     blended = (base_img * 0.4) + (jet_heatmap_array * 0.6)
     blended_uint8 = np.uint8(np.clip(blended, 0, 1) * 255)
 
@@ -363,13 +353,11 @@ def login():
 
 @app.route("/login/google", methods=["GET"])
 def login_google():
-    # Redirect to Firebase JS SDK based login
     return redirect(url_for("login_page"))
 
 
 @app.route("/firebase/google/login", methods=["POST"])
 def firebase_google_login():
-    """Handle Firebase Google Sign-In token from frontend"""
     try:
         data = request.get_json()
         id_token = data.get("idToken")
@@ -377,15 +365,12 @@ def firebase_google_login():
         if not id_token:
             return {"success": False, "error": "No ID token provided"}, 400
         
-        # Verify the token with Firebase Admin (if available)
         if firebase_admin and auth:
             try:
-                # Verify the token
                 decoded_token = auth.verify_id_token(id_token)
                 email = decoded_token.get("email")
                 name = decoded_token.get("name", email.split("@")[0])
                 
-                # Store session
                 session["user_email"] = email
                 session["doctor_name"] = name
                 session["firebase_uid"] = decoded_token.get("uid")
@@ -395,12 +380,10 @@ def firebase_google_login():
             except Exception as e:
                 return {"success": False, "error": f"Token verification failed: {str(e)}"}, 401
         
-        # If Firebase Admin not configured, decode token manually
         import base64
         parts = id_token.split(".")
         if len(parts) >= 2:
             payload = parts[1]
-            # Add padding if needed
             padding = 4 - len(payload) % 4
             if padding != 4:
                 payload += "=" * padding
@@ -408,7 +391,6 @@ def firebase_google_login():
             email = user_info.get("email", "google_user@example.com")
             name = user_info.get("name", "Google User")
             
-            # Store session
             session["user_email"] = email
             session["doctor_name"] = name
             session["oauth_provider"] = "google"
@@ -423,7 +405,6 @@ def firebase_google_login():
 
 @app.route("/oauth/callback", methods=["GET", "POST"])
 def oauth_callback():
-    """Handle OAuth callback from Google"""
     error = request.args.get("error")
     if error:
         return render_page(
@@ -432,11 +413,9 @@ def oauth_callback():
             login_error=f"Google login failed: {error}"
         )
     
-    # Get authorization code
     code = request.args.get("code")
     state = request.args.get("state")
     
-    # Verify state matches
     if state != session.get("oauth_state"):
         return render_page(
             "login.html",
@@ -451,7 +430,6 @@ def oauth_callback():
             login_error="No authorization code received."
         )
     
-    # Exchange code for tokens
     if not FIREBASE_WEB_API_KEY:
         return render_page(
             "login.html",
@@ -459,7 +437,6 @@ def oauth_callback():
             login_error="Firebase Web API key not configured."
         )
     
-    # Exchange authorization code for tokens with Firebase
     token_url = f"https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key={FIREBASE_WEB_API_KEY}"
     
     post_data = {
@@ -480,15 +457,12 @@ def oauth_callback():
         with urllib_request.urlopen(req, timeout=15) as response:
             token_data = json.loads(response.read().decode("utf-8"))
             
-            # Get user info from id token
             id_token = token_data.get("idToken")
             if id_token:
-                # Decode JWT to get user info (in production, verify the token)
                 import base64
                 parts = id_token.split(".")
                 if len(parts) >= 2:
                     payload = parts[1]
-                    # Add padding if needed
                     padding = 4 - len(payload) % 4
                     if padding != 4:
                         payload += "=" * padding
@@ -499,12 +473,9 @@ def oauth_callback():
                     email = "google_user@example.com"
                     name = "Google User"
                 
-                # Store session
                 session["user_email"] = email
                 session["doctor_name"] = name
                 session["oauth_provider"] = "google"
-                
-                # Clean up OAuth state
                 session.pop("oauth_state", None)
                 
                 return render_page(
@@ -534,7 +505,6 @@ def get_history():
     if not user_email:
         return redirect('/login')
 
-    # ফায়ারবেস থেকে শুধুমাত্র লগিন করা ইউজারের ডাটা আনা
     docs = firebase_db.collection('reports').where('doctor_email', '==', user_email).stream()
     
     history_data = []
@@ -542,10 +512,8 @@ def get_history():
         data = doc.to_dict()
         data['id'] = doc.id
         
-        # টাইম ঠিকভাবে ফরম্যাট করা (যাতে Date এর ঘরে সুন্দরভাবে দেখায়)
         if 'created_at' in data and data['created_at']:
             try:
-                # Firestore এর timestamp কে সুন্দর স্ট্রিং এ কনভার্ট করা
                 data['formatted_date'] = data['created_at'].strftime('%Y-%m-%d %I:%M %p')
             except:
                 data['formatted_date'] = str(data['created_at'])
@@ -554,9 +522,7 @@ def get_history():
             
         history_data.append(data)
 
-    # সবচেয়ে নতুন টেস্টগুলো যেন টেবিলের উপরে থাকে সেই জন্য সর্ট (Sort) করা
     history_data = sorted(history_data, key=lambda x: x.get('created_at', 0), reverse=True)
-
     return render_template('history.html', history=history_data)
 
 
@@ -566,19 +532,14 @@ def view_report(report_id):
     if not user_email:
         return redirect('/login')
 
-    # Firebase theke oi specific report-er data ana
     doc_ref = firebase_db.collection('reports').document(report_id)
     doc = doc_ref.get()
 
     if doc.exists:
         report_data = doc.to_dict()
-
-        # Security check: Je doctor login korechhen, shey jeno shudhu tar report-i dekhte paren
         if report_data.get('doctor_email') != user_email:
             return "Unauthorized access!", 403
 
-        # Ekhane amra 'report.html' template-ti use korbo jate predict korar por jemon dekhaisilo thik temon-i dekhay
-        # report_data-er moddhe already 'filename', 'gradcam_filename', 'patient_name' egulo ase
         return render_template("report.html", 
                                active_page="report", 
                                **report_data)
@@ -587,15 +548,14 @@ def view_report(report_id):
     
     
 
-
 @app.route('/delete_history/<history_id>', methods=['POST'])
 def delete_history(history_id):
     user_email = session.get('user_email')
     if user_email:
-      
         firebase_db.collection('reports').document(history_id).delete()
         return jsonify({"status": "success"})
     return jsonify({"status": "error"})
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -648,11 +608,10 @@ def register():
                 register_error=f"Registration failed: {str(e)}"
             )
     else:
-        # ডেমো মোড বাদ দিয়ে সরাসরি এরর দেখাবে
         return render_page(
             "register.html",
             active_page="register",
-            register_error="System Error: Firebase is not connected! Please check your .env file and firebase-key.json"
+            register_error="System Error: Firebase is not connected! Please check your firebase-key.json file."
         )
 
 
@@ -736,7 +695,6 @@ def predict():
     file.save(filepath)
 
     try:
-        # Validate it is really an image before model inference.
         with Image.open(filepath) as verify_img:
             verify_img.verify()
     except Exception:
@@ -807,7 +765,7 @@ def predict():
     session["last_report"] = report_payload
     return redirect(url_for("report_page"))
 
-# Show uploaded image
+
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     try:
